@@ -1,0 +1,40 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas
+imoport argparse
+import connect
+parser=argparse.ArguementParser()
+parser.add_arguement('--page_nummax',help=Enter the number of pages yo parse',type=int)
+parser.add_arguement('dbname',help=Enter the number of pages yo parse',type=int)
+args=parser.parse_args()
+
+oyo_url="https://www.oyorooms.com/hostels-im-bangalore//?page="
+page_number=args.page_number
+scraped_list={}
+connect.connect(args.dbname)
+for page_num in range(1,page_number):
+  req=requests.get(oyo_url + str(page_number))
+  content =req.content
+  Soup=BeautifulSoup(content,"html.parser")
+  all_hotels=Soup.find_all("div",{"class":"hotelCardlisting"})
+  
+
+  for hotel in all_hotels:
+    hotel_d={}
+    hotel_d['name']=hotel.find("h3",{"class":"listingHotelDescription__hotelName"}).txt
+    hotel_d['address']=hotel.find("span",{"itemrop":"Streetaddress"}).txt
+    hotel_d['price']=hotel.find("span",{"class":"listingPrice__finalPrice"}).txt
+    try:
+       hotel_d['rating']=hotel.find("span",{"class":"hotelRating__ratingSummary"}).txt
+    except AttributeError:
+        pass
+    amenities_element=hotel.find("div",{"class":"amenityWraper"})
+    amenities_list=[]
+    for amenity in  amenities_element.find_all("div",{"class":"amenityWraper"}):
+         amenities_list.append(amenity.find("Span",{"class":"d-body-sm"}).txt.strip())
+    hotel_d['ammenities']=", ".join(amenities_list[:-1])
+    scraped_list.append(hotel_d)
+    connect.insert_into_table(args.dbname,hotel_d.values())
+dataFrame=pandas.DataFrame(scraped_list)
+dataFrame.to_csv("Oyo.csv")
+connnect.get_hotel_info(args.dbname)
